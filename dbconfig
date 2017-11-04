@@ -1,0 +1,23 @@
+#!/usr/bin/env python
+
+import argparse
+import subprocess
+
+def config_for(site):
+  defines = subprocess.check_output("grep define %s/wp-config.php | grep DB_" % site, shell=True).strip().replace(';', '')
+  config={}
+
+  def define(key, value):
+    config[key] = value
+
+  for line in defines.split("\n"):
+    eval(line)
+
+  return config
+
+if __name__ == '__main__':
+  parser = argparse.ArgumentParser()
+  parser.add_argument('site', help='Site root to parse dbconfig from.')
+  args = parser.parse_args()
+
+  print config_for(args.site)

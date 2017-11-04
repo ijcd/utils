@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+function usage() {
+  echo "$0 (unlock|lock) <site>" 2>&1
+}
+
+command=$1
+site=$2
+
+if [ -z "$site" ] ; then
+  usage
+  exit 1
+fi
+
+case $command in
+  lock)
+    echo Locking $site
+    # make directories user/group read, navigable (no write)
+    find $site -type d -print0 | xargs -0 chmod a=rx
+    # make files user/group read (no write)
+    find $site -type f -print0 | xargs -0 chmod a=r
+    # make uploads directory/files writable (for photos, etc)
+    find $site/wp-content/uploads -type d -print0 | xargs -0 chmod ug=rwx,o=rx
+    find $site/wp-content/uploads -type f -print0 | xargs -0 chmod ug=rw,o=r
+    echo Locked $site
+    ;;
+
+  unlock)
+    echo Unlocking $site
+    # make directories user/group read, write, navigable
+    find $site -type d -print0 | xargs -0 chmod ug=rwx,o=rx
+    # make files user/group read, write
+    find $site -type f -print0 | xargs -0 chmod ug=rw,o=r
+    echo Unlocked $site
+    ;;
+
+  *)
+    usage
+    exit 1
+esac

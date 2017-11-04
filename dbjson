@@ -1,0 +1,84 @@
+#!/usr/bin/env python
+
+import MySQLdb
+import json
+import contextlib
+import argparse
+import os
+import sys
+from datetime import date, datetime
+
+def json_serial(obj):
+  """JSON serializer for objects not serializable by default json code"""
+
+  if isinstance(obj, (datetime, date)):
+    return obj.isoformat()
+  raise TypeError ("Type %s not serializable" % type(obj))
+
+@contextlib.contextmanager
+def db_connect(**kwds):
+  conn = MySQLdb.connect(**kwds)
+  try:
+    yield conn
+  finally:
+    conn.close()
+
+def list_tables(conn):
+  cursor = conn.cursor()
+  cursor.execute("SHOW TABLES")
+  return [table_name for (table_name,) in cursor]
+
+def table_index(conn, table_name):
+  cursor = conn.cursor()
+  cursor.execute("SHOW INDEX FROM %s WHERE Key_name = 'PRIMARY'" % table_name)
+  headers = row_headers(cursor)
+  return [dict(zip(headers, index)) for index in cursor]
+
+def table_rows(conn, table_name):
+  cursor = conn.cursor()
+  cursor.execute("SELECT * FROM %s" % (table_name))
+  headers = row_headers(cursor)
+  for row in cursor:
+    yield dict(zip(headers, row))
+
+def row_headers(cursor):
+  return [x[0] for x in cursor.description]
+
+def row_to_filename(row, index):
+  key_cols = [i['Column_name'] for i in index]
+  key_vals = [row[c] for c in key_cols]
+  return "_".join([str(kv) for kv in key_vals]) + ".json"
+
+def row_to_json(row):
+  return json.dumps(row, default=json_serial, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ': '))
+
+def make_directory(segments):
+  path = os.path.join(*segments)
+  if not os.path.exists(path):
+    os.makedirs(path)
+
+if __name__ == '__main__':
+  parser = argparse.ArgumentParser()
+  parser.add_argument('--dbhost', help='Database hostname.')
+  parser.add_argument('--dbuser', help='Database username.')
+  parser.add_argument('--dbpass', help='Database password.')
+  parser.add_argument('dbname', help='Database to dump from.')
+  args = parser.parse_args()
+
+  db_path = os.path.join(*["dbjson", args.dbname])
+  if os.path.exists(db_path):
+    print "Remove the database export directory before running again: %s" % db_path
+    sys.exit(1)
+
+  with db_connect(host = args.dbhost, user = args.dbuser, passwd = args.dbpass, db = args.dbname) as conn:
+    for table_name in list_tables(conn):
+      print "Processing table %s" % table_name
+
+      table_dir = ["dbjson", args.dbname, table_name]
+      make_directory(table_dir)
+
+      index = table_index(conn, table_name)
+      for row in table_rows(conn, table_name):
+        path = os.path.join(*(table_dir + [row_to_filename(row, index)]))
+        with open(path, 'w') as f:
+          f.write(row_to_json(row))

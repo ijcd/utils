@@ -1,0 +1,41 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import imp
+import argparse
+
+dbconfig_path = os.path.join(*[os.path.dirname(__file__), 'dbconfig'])
+dbconfig = imp.load_source('dbconfig', dbconfig_path)
+
+
+def mysqldump_for(config):
+  return "mysqldump --add-drop-database --add-drop-table -h %s -u%s -p%s %s" % (
+  	config['DB_HOST'],
+  	config['DB_USER'],
+  	config['DB_PASSWORD'],
+  	config['DB_NAME'],  	
+  	)
+
+def mysql_for(config):
+  return "mysql -h %s -u%s -p%s %s" % (
+  	config['DB_HOST'],
+  	config['DB_USER'],
+  	config['DB_PASSWORD'],
+  	config['DB_NAME'],  	
+  	)
+
+if __name__ == '__main__':
+  parser = argparse.ArgumentParser()
+  parser.add_argument('source', help='Source site root directory. (database config will be parsed from wp-config.php)')
+  parser.add_argument('target', help='Target site root directory. (database config will be parsed from wp-config.php)')
+  args = parser.parse_args()
+
+  source = dbconfig.config_for(args.source)
+  target = dbconfig.config_for(args.target)
+
+  print "Copying database for %s to %s" % (args.source, args.target)
+  print mysqldump_for(source)
+  print mysql_for(target)
+
+  subprocess.call("%s | %s" % (mysqldump_for(source), mysql_for(target)))
