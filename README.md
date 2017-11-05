@@ -73,8 +73,8 @@ optional arguments:
 usage: dbcopy [-h] source target
 
 positional arguments:
-  source      Source site root directory. (database config will be parse from wp-config.php)
-  target      Target site root directory. (database config will be parse from wp-config.php)
+  source      Source site root directory. (config via wp-config.php)
+  target      Target site root directory. (config via wp-config.php)
 
 optional arguments:
   -h, --help  show this help message and exit
