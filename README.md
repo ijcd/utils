@@ -2,6 +2,13 @@
 
 These are odds and ends that I find useful for working with WordPress.
 
+## linuxbrew
+
+Working in the home directory of a hosting provider can feel quite isolated. They don't always
+have the best tooling installed, and you don't have root access to improve things.
+[Linuxbrew](http://linuxbrew.sh/) is a package manager for your home directory (ported from
+brew for OSX). I find it useful:
+
 
 ## sitelock
 
@@ -25,18 +32,18 @@ sitelock unlock <wp-site-root>
 This script is useful for dumping a database to json files. There is one file per row per table.
 
 ```
-usage: dbjson [-h] [--dbhost DBHOST] [--dbuser DBUSER] [--dbpass DBPASS]
-              dbname
-
-positional arguments:
-  dbname           Database to dump from.
+usage: dbjson [-h] [--site SITE] [--dbhost DBHOST] [--dbuser DBUSER]
+              [--dbpass DBPASS] [--dbname DBNAME]
 
 optional arguments:
   -h, --help       show this help message and exit
+  --site SITE      Site with database to dump. (If this is specified, the
+                   --db* options should not be)
   --dbhost DBHOST  Database hostname.
   --dbuser DBUSER  Database username.
   --dbpass DBPASS  Database password.
-  ```
+  --dbname DBNAME  Database to dump from.
+```
 
 The files will be saved as `./dbjson/<table_name>/<primary_key>.json`, one for each row.
 
