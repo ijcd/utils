@@ -28,8 +28,8 @@ def mysql_for(config):
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-  parser.add_argument('source', help='Source site root directory. (database config will be parsed from wp-config.php)')
-  parser.add_argument('target', help='Target site root directory. (database config will be parsed from wp-config.php)')
+  parser.add_argument('source', help='Source site root directory. (config via wp-config.php)')
+  parser.add_argument('target', help='Target site root directory. (config via wp-config.php)')
   args = parser.parse_args()
 
   source = dbconfig.config_for(args.source)
